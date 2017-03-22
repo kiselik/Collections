@@ -1,20 +1,17 @@
 package secondTask;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.Stack;
+import java.util.ListIterator;
 
 public class Tree {
-    private ArrayList<Node> tree;
-    private Stack<Integer> stackChildren;
+    private LinkedList<Node> tree;
     private int countOfChild;
     private int size;
 
     Tree(int size, int countOfChild) {
         this.countOfChild = countOfChild;
         this.size = size;
-        tree = new ArrayList<>();
-        stackChildren = new Stack<>();
+        tree = new LinkedList<>();
         //закидали всё в дерево
         for (int i = 0; i < size; i++) {
             Node tmp = new Node(i);
@@ -25,65 +22,49 @@ public class Tree {
     }
 
 
-    Node searchNode(int index) {
-        Node result = tree.get(index);
-        return result;
+    private void searchChildren(int id) {
+        int start = id * countOfChild + 1;
+        int finish = start + countOfChild - 1;
+        for (int i = start; (i <= finish) && (i < size); i++) {
+            tree.get(id).addChild(tree.get((int) i));
+        }
     }
+
+    /**
+     * this method find number of Node in our tree, which has id=index
+     */
+    long searchNode(long index) {
+        ListIterator<Node> iterator = tree.listIterator();
+        long result = -1;
+        if (tree.size() != 0) {
+            result = iterator.next().getId();
+            while (iterator.hasNext() && result != index)
+                result = iterator.next().getId();
+        }
+        return iterator.previousIndex();
+    }
+
 
     /**
      * Delete part of tree. Method started from node with number index
      */
     void delNode(int index) {
+        //список вершин, которые надо удалить
         LinkedList<Node> openNode = new LinkedList<>();
+
+        long parent = (index - 1) / countOfChild;
+        tree.get((int) parent).deleteChild(index);
+
         openNode.add(tree.get(index));
         while ((openNode.size() != 0)) {
             Node first = openNode.getFirst();
-            if (first.getChildren().size() != 0)
-                openNode.addAll(first.getChildren());
-            stackChildren.add((int) first.getId());
+            openNode.addAll(first.getChildren());
+            //нашли номер вершины first в текущем списке tree
+            tree.remove((int) searchNode(first.getId()));
             openNode.pop();
         }
-
-        while (stackChildren.size() != 0) {
-            //Node last = tree.get(stackChildren.peek());
-            tree.get(stackChildren.peek()).deleteChildren();
-            tree.remove((int) stackChildren.pop());
-        }
-
     }
 
-    private void searchChildren(int id) {
-        long start = leftChild(id);
-        if (start != -1) {
-            long finish = rightChild(id);
-            for (long i = start; i <= finish; i++) {
-                tree.get(id).addChild(tree.get((int) i));
-            }
-        }
-    }
-
-    private long leftChild(int id) {
-        long left = id * countOfChild + 1;
-        if (left >= tree.size())
-            return -1;
-        else
-            return left;
-    }
-
-    private long rightChild(int id) {
-        long right = leftChild(id);
-        if (right == -1)
-            return -1;
-        else
-            return min(right + countOfChild - 1, tree.size() - 1);
-    }
-
-    private long min(long a, long b) {
-        if (a <= b)
-            return a;
-        else
-            return b;
-    }
 
     void printTree() {
         for (Node i : tree) {
